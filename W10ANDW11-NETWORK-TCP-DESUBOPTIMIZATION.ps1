@@ -150,76 +150,6 @@ if ($DISABLEPCFOK -eq $true)
     Write-Host "Disabling PACKET COALESCING FILTER can't finished successfully. :-(" -ForegroundColor Red
     }
 
-# DISABLE RECEIVE SIDE SCALING ON WINDOWS TCP-STACK
-$DISABLERSSOK = $true
-Write-Host "Start disabling RECEIVE SIDE SCALING on Windows TCP-Stack" -ForegroundColor Cyan
-Write-Host "  Check current state of RECEIVE SIDE SCALING" -ForegroundColor Gray
-$STATUSRSS = Get-NetOffloadGlobalSetting | Select-Object ReceiveSideScaling | Select ReceiveSideScaling -ExpandProperty ReceiveSideScaling | Out-String -Stream
-if ($STATUSRSS -eq "Disabled")
-  {
-  Write-Host "  The RECEIVE SIDE SCALING is already disabled, so nothing to do. :-)" -ForegroundColor Green
-  }
-else
-  {
-  Write-Host "  The RECEIVE SIDE SCALING is enabled, try next to disable it." -ForegroundColor Yellow
-  try
-    {
-    Set-NetOffloadGlobalSetting -ReceiveSideScaling Disabled -ErrorAction Stop
-    Write-Host "    The RECEIVE SIDE SCALING is successfully set to disabled. :-)" -ForegroundColor Green
-    }
-  catch
-    {
-    $DISABLERSSOK = $false
-    Write-Host ("  The RECEIVE SIDE SCALING could not set to disabled. :-(") -ForegroundColor Red
-    if ($DEDAILEDDEBUG -eq "ON") 
-      {Write-Host $_ -ForegroundColor Red}
-    }
-  }
-if ($DISABLERSSOK -eq $true)
-    {
-    Write-Host "Disabling RECEIVE SIDE SCALING has been finished successfully. :-)" -ForegroundColor Cyan
-    }
-  else
-    {
-    $FULLYCOMPLETED = $false
-    Write-Host "Disabling RECEIVE SIDE SCALING can't finished successfully. :-(" -ForegroundColor Red
-    }
-
-# DISABLE RECEIVE SEGMENT COALESCING ON WINDOWS TCP-STACK
-$DISABLERSCOK = $true
-Write-Host "Start disabling RECEIVE SEGMENT COALESCING on Windows TCP-Stack" -ForegroundColor Cyan
-Write-Host "  Check current state of RECEIVE SEGMENT COALESCING" -ForegroundColor Gray
-$STATUSRSC = Get-NetOffloadGlobalSetting | Select-Object ReceiveSegmentCoalescing | Select ReceiveSegmentCoalescing -ExpandProperty ReceiveSegmentCoalescing | Out-String -Stream
-if ($STATUSRSC -eq "Disabled")
-  {
-  Write-Host "  The RECEIVE SEGMENT COALESCING is already disabled, so nothing to do. :-)" -ForegroundColor Green
-  }
-else
-  {
-  Write-Host "  The RECEIVE SEGMENT COALESCING is enabled, try next to disable it." -ForegroundColor Yellow
-  try
-    {
-    Set-NetOffloadGlobalSetting -ReceiveSegmentCoalescing Disabled -ErrorAction Stop
-    Write-Host "    The RECEIVE SEGMENT COALESCING is successfully set to disabled. :-)" -ForegroundColor Green
-    }
-  catch
-    {
-    $DISABLERSCOK = $false
-    Write-Host ("  The RECEIVE SEGMENT COALESCING could not set to disabled. :-(") -ForegroundColor Red
-    if ($DEDAILEDDEBUG -eq "ON") 
-      {Write-Host $_ -ForegroundColor Red}
-    }
-  }
-if ($DISABLERSCOK -eq $true)
-    {
-    Write-Host "Disabling RECEIVE SEGMENT COALESCING has been finished successfully. :-)" -ForegroundColor Cyan
-    }
-  else
-    {
-    $FULLYCOMPLETED = $false
-    Write-Host "Disabling RECEIVE SEGMENT COALESCING can't finished successfully. :-(" -ForegroundColor Red
-    }
-
 # OPTIMIZE TCP CONGESTION CONTROL
 $CHANGETCPCCOK = $true
 Write-Host "Start TCP congestion controll optimization" -ForegroundColor Cyan
@@ -341,59 +271,6 @@ else
   $FULLYCOMPLETED = $false
   Write-Host "TCP profile optimization can't finished successfully. :-(" -ForegroundColor Red
   }
-
-# DISABLE RSS ON ALL NIC's
-$DISABLERSSOK = $true
-Write-Host "Start disabling RSS on all NIC's" -ForegroundColor Cyan
-Write-Host "  Check if NIC's with RSS support are avaible on this System." -ForegroundColor Gray
-$NICs = Get-NetAdapter -Physical | Get-NetAdapterAdvancedProperty | Where-Object -FilterScript {$_.RegistryKeyword -Like "*RSS"} 
-$NICsWITHRSS = $NICs | Measure-Object -Line | Select-Object Lines | Select Lines -ExpandProperty Lines
-
-if ($NICsWITHRSS -eq 0)
-  {
-      Write-Host ("  No NIC's installed in this system which support RSS, so, nothing to do. :-)") -ForegroundColor Green
-  }
-else
-  {
-  Write-Host ("  " + $NICsWITHRSS + " NIC's found on this System that support RSS") -ForegroundColor Yellow
-  foreach ($adapter in $NICs) 
-    {
-    $NICNAME = $adapter | Select-Object Name | Select Neme -ExpandProperty Name | Out-String -Stream
-    $RSSVALUE = $adapter | Select-Object RegistryValue | Select RegistryValue -ExpandProperty RegistryValue | Out-String -Stream 
-  
-    Write-Host ("    Check RSS Status of NIC " + $NICNAME + " .") -ForegroundColor Gray
-  
-    if ($RSSVALUE -eq "0")
-      {
-      Write-Host ("    RSS on NIC " + $NICNAME + " is already disabled, so, nothing to do. :-)") -ForegroundColor Green
-      }
-    else
-      {
-      Write-Host ("    RSS on NIC " + $NICNAME + " is enabled, try next to disable it.") -ForegroundColor Yellow
-      try
-        {
-        Set-NetAdapterAdvancedProperty -Name "$NICNAME" -RegistryKeyword "*RSS" -RegistryValue 0 -ErrorAction Stop
-        Write-Host "    RSS on NIC " + $NICNAME + ", has been successfully set to disabled. :-)" -ForegroundColor Green
-        }
-      catch
-        {
-        $DISABLERSSOK = $false
-        Write-Host ("  The RSS on NIC " + $NICNAME + ", could not set to disabled. :-(") -ForegroundColor Red
-        if ($DEDAILEDDEBUG -eq "ON") 
-          {Write-Host $_ -ForegroundColor Red}
-        }
-      }
-    }
-  }
-if ($DISABLERSSOK -eq $true)
-    {
-    Write-Host "RSS has been successfully disabled on all corresponding NIC's or there is nothing to do. :-)" -ForegroundColor Cyan
-    }
-  else
-    {
-    $FULLYCOMPLETED = $false
-    Write-Host "Disabling RSS can't finished successfully. :-(" -ForegroundColor Red
-    }
 
 # DISABLE RSC-IPv4 FOR ALL NIC's
 $DISABLERSCIPV4OK = $true
